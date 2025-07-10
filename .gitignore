@@ -1,0 +1,51 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# Environment & secret files
+.env
+.env.*
+.secret
+*.key
+
+# SQLite database (local only)
+*.db
+database.db
+
+# Flask cache and test artifacts
+instance/
+*.log
+*.log.*
+*.pid
+
+# Pytest and coverage reports
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+report.html
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+.eggs/
+*.manifest
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-generated
+.DS_Store
+Thumbs.db

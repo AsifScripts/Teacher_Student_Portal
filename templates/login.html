@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="col-md-4 offset-md-4">
+            <h4>Teacher Login</h4>
+
+            {% if success %}
+            <div id="alertMessage" class="alert alert-success" role="alert">
+                {{ success }}
+            </div>
+            {% elif error %}
+            <div id="alertMessage" class="alert alert-danger" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form method="post" action="/login">
+                <input type="text" name="username" class="form-control mb-3" placeholder="Username" required>
+
+                <input type="password" name="password" id="password" class="form-control mb-2" placeholder="Password"
+                    required>
+
+                <!-- Show/Hide Password -->
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="togglePassword">
+                    <label class="form-check-label" for="togglePassword">Show Password</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mb-2">Login</button>
+
+                <!-- Forgot Password -->
+                <div class="text-center">
+                    <a href="/forgot" class="text-decoration-none">Forgot / Reset Password?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toggle Password Script -->
+    <script>
+        // Show/hide password
+        document.getElementById('togglePassword').addEventListener('change', function () {
+            const pwd = document.getElementById('password');
+            pwd.type = this.checked ? 'text' : 'password';
+        });
+
+        // Auto-dismiss alert after 2 seconds
+        setTimeout(() => {
+            const alert = document.getElementById('alertMessage');
+            if (alert) {
+                alert.style.display = 'none';
+            }
+        }, 1000);
+    </script>
+
+</body>
+
+</html>

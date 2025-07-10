@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: teacher-portal
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: MAIL_USERNAME
+        value: your_email@gmail.com
+      - key: MAIL_PASSWORD
+        value: your_app_password
