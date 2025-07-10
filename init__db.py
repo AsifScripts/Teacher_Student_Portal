@@ -23,9 +23,9 @@ def init_database():
     )
     ''')
 
-    hashed_pwd = generate_password_hash("Wild@Asif12")
+    hashed_pwd = generate_password_hash("Admin@Password12")
     c.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-              ("asif", "asif1bit@gmail.com", hashed_pwd))
+              ("Admin", "asif1bit@gmail.com", hashed_pwd))
 
     conn.commit()
     conn.close()

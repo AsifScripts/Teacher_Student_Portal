@@ -23,7 +23,7 @@ CREATE TABLE students (
 """)
 
 # Insert dummy user (use plain or hashed password based on app logic)
-conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("asif", "admin123"))
+conn.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("Admin", "Admin@Password12"))
 
 conn.commit()
 conn.close()

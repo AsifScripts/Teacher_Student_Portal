@@ -14,8 +14,8 @@ try:
 
     # Fill in login credentials
     print("🔐 Entering credentials...")
-    driver.find_element(By.NAME, "username").send_keys("asif")
-    driver.find_element(By.NAME, "password").send_keys("Wild@Asif12")
+    driver.find_element(By.NAME, "username").send_keys("Admin")
+    driver.find_element(By.NAME, "password").send_keys("Admin@Password12")
 
     print("📤 Submitting login form...")
     driver.find_element(By.TAG_NAME, "form").submit()

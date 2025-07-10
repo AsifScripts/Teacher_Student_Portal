@@ -6,35 +6,38 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
 from init__db import init_database
+from dotenv import load_dotenv
 
-# Initialize database on startup (safe to call repeatedly)
+# 🧱 Initialize the SQLite DB (safe to call repeatedly)
 init_database()
+load_dotenv()
 
+# 🔧 Flask app & mail config
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")  # Replace default in production
 
-# Flask-Mail configuration using environment variables for safety
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config.update({
+    'MAIL_SERVER': 'smtp.gmail.com',
+    'MAIL_PORT': 587,
+    'MAIL_USE_TLS': True,
+    'MAIL_USERNAME': os.getenv('MAIL_USERNAME'),
+    'MAIL_PASSWORD': os.getenv('MAIL_PASSWORD'),
+    'MAIL_DEFAULT_SENDER': os.getenv('MAIL_USERNAME')  # Needed to avoid AssertionError
+})
 
 mail = Mail(app)
-app.secret_key = os.getenv("SECRET_KEY", 'default_secret_key')  # Override in production
+otp_store = {}  # ⏳ In-memory OTP cache
 
-# In-memory OTP store for password reset (cleared on restart)
-otp_store = {}
-
-# Database connection setup
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'database.db')
+# 📁 DB connection
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database.db')
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-# ---------------------- ROUTES ----------------------
+# ====================== ROUTES ======================
+
 @app.route('/')
 def login():
     return render_template('login.html')
@@ -66,19 +69,24 @@ def dashboard():
 def add_student():
     name = request.form['name'].strip()
     subject = request.form['subject'].strip()
+
     try:
         marks = int(request.form['marks'])
-        if marks < 0 or marks > 100:
+        if not 0 <= marks <= 100:
             raise ValueError
     except ValueError:
         return redirect(url_for('dashboard'))
 
     with get_db_connection() as conn:
-        existing = conn.execute("SELECT * FROM students WHERE name = ? AND subject = ?", (name, subject)).fetchone()
+        existing = conn.execute(
+            "SELECT * FROM students WHERE name = ? AND subject = ?", (name, subject)
+        ).fetchone()
+
         if existing:
             conn.execute("UPDATE students SET marks = ? WHERE id = ?", (marks, existing['id']))
         else:
-            conn.execute("INSERT INTO students (name, subject, marks) VALUES (?, ?, ?)", (name, subject, marks))
+            conn.execute("INSERT INTO students (name, subject, marks) VALUES (?, ?, ?)",
+                         (name, subject, marks))
         conn.commit()
     return redirect(url_for('dashboard'))
 
@@ -109,11 +117,13 @@ def logout():
     session.clear()
     return redirect('/')
 
-# ---------------------- PASSWORD RESET ----------------------
+# =================== FORGOT PASSWORD FLOW ===================
+
 @app.route('/forgot', methods=['GET', 'POST'])
 def forgot_password():
     if request.method == 'POST':
         email = request.form['email'].strip()
+
         conn = get_db_connection()
         user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         conn.close()
@@ -124,11 +134,11 @@ def forgot_password():
         otp = str(random.randint(100000, 999999))
         otp_store[email] = {'otp': otp, 'timestamp': time.time()}
 
-        msg = Message('Teacher Portal Password Reset OTP', sender=app.config['MAIL_USERNAME'], recipients=[email])
+        msg = Message("Teacher Portal Password Reset OTP", recipients=[email])
         msg.body = (
-            f"You're receiving this OTP because you (or someone else) requested a password reset for Teacher Portal.\n\n"
+            f"You're receiving this OTP because you requested a password reset for Teacher Portal.\n\n"
             f"Your OTP is: {otp}\n\n"
-            f"⚠️ Do not share this with anyone. If you didn't request a reset, ignore this email.\n\n"
+            f"⚠️ Do not share this with anyone.\n"
             f"This OTP will expire in 5 minutes."
         )
         mail.send(msg)
@@ -146,17 +156,17 @@ def verify_otp():
     otp_entry = otp_store.get(email)
 
     if not otp_entry:
-        return render_template('verify_otp.html', email=email, error='OTP expired or invalid. Please request again.')
+        return render_template('verify_otp.html', email=email, error='OTP expired or invalid. Please try again.')
 
     if time.time() - otp_entry['timestamp'] > 300:
         otp_store.pop(email, None)
         return render_template('verify_otp.html', email=email, error='OTP has expired. Please request a new one.')
 
     if otp_entry['otp'] != otp:
-        return render_template('verify_otp.html', email=email, error='Invalid OTP')
+        return render_template('verify_otp.html', email=email, error='Invalid OTP.')
 
     if new_password != confirm_password:
-        return render_template('verify_otp.html', email=email, error='Passwords do not match')
+        return render_template('verify_otp.html', email=email, error='Passwords do not match.')
 
     conn = get_db_connection()
     hashed_pwd = generate_password_hash(new_password)
@@ -167,6 +177,6 @@ def verify_otp():
     otp_store.pop(email, None)
     return render_template('login.html', success='Password reset successful. Please log in.')
 
-# Run the app (commneted for deployment)
-# if __name__ == '__main__':
-#     app.run(debug=False)
+# =================== RUN ===================
+if __name__ == '__main__':
+    app.run(debug=False)  # Use debug=False in production
