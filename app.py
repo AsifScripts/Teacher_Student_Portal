@@ -178,5 +178,5 @@ def verify_otp():
     return render_template('login.html', success='Password reset successful. Please log in.')
 
 # =================== RUN ===================
-if __name__ == '__main__':
-    app.run(debug=False)  # Use debug=False in production
+# if __name__ == '__main__':
+#    app.run(debug=False)  # Use debug=False in production
