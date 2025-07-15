@@ -69,10 +69,9 @@ def dashboard():
 def add_student():
     name = request.form['name'].strip()
     subject = request.form['subject'].strip()
-
     try:
         marks = int(request.form['marks'])
-        if not 0 <= marks <= 100:
+        if marks < 0 or marks > 100:
             raise ValueError
     except ValueError:
         return redirect(url_for('dashboard'))
@@ -83,12 +82,22 @@ def add_student():
         ).fetchone()
 
         if existing:
-            conn.execute("UPDATE students SET marks = ? WHERE id = ?", (marks, existing['id']))
+            # Add the new marks to existing marks
+            total_marks = existing['marks'] + marks
+            conn.execute(
+                "UPDATE students SET marks = ? WHERE id = ?",
+                (total_marks, existing['id'])
+            )
         else:
-            conn.execute("INSERT INTO students (name, subject, marks) VALUES (?, ?, ?)",
-                         (name, subject, marks))
+            # Insert new record
+            conn.execute(
+                "INSERT INTO students (name, subject, marks) VALUES (?, ?, ?)",
+                (name, subject, marks)
+            )
         conn.commit()
+
     return redirect(url_for('dashboard'))
+
 
 @app.route('/update_student', methods=['POST'])
 def update_student():
